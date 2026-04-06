@@ -10,9 +10,13 @@ class IndonesiaDestination extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'title', 'slug', 'description', 'base_price', 
-        'duration_days', 'duration_nights', 'airline_info', 'highlights', 
-        'inclusions', 'exclusions', 'terms_conditions'
+        'category_id', 'title', 'slug', 'description', 'base_price',
+        'duration_days', 'duration_nights', 'airline_info', 'highlights',
+        'inclusions', 'exclusions', 'terms_conditions', 'interest_tags',
+    ];
+
+    protected $casts = [
+        'interest_tags' => 'array',
     ];
 
     public function category()

@@ -10,7 +10,7 @@ class TourPrice extends Model
     use HasFactory;
 
     protected $fillable = [
-        'priceable_id', 'priceable_type', 'type', 'price', 'tax', 'insurance', 'visa_fee', 'tipping'
+        'priceable_id', 'priceable_type', 'type', 'price', 'tax', 'insurance', 'visa_fee', 'tipping',
     ];
 
     public function priceable()

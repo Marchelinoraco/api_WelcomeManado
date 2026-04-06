@@ -10,10 +10,10 @@ class InternationalTour extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'title', 'slug', 'description', 'base_price', 
-        'duration_days', 'duration_nights', 'airline_info', 'highlights', 
-        'inclusions', 'exclusions', 'terms_conditions', 
-        'visa_requirements', 'passport_validity'
+        'category_id', 'title', 'slug', 'description', 'base_price',
+        'duration_days', 'duration_nights', 'airline_info', 'highlights',
+        'inclusions', 'exclusions', 'terms_conditions',
+        'visa_requirements', 'passport_validity',
     ];
 
     public function category()

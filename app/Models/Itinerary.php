@@ -10,7 +10,7 @@ class Itinerary extends Model
     use HasFactory;
 
     protected $fillable = [
-        'itinerable_id', 'itinerable_type', 'day_number', 'title', 'description', 'hotel_info', 'meals_info'
+        'itinerable_id', 'itinerable_type', 'day_number', 'title', 'description', 'hotel_info', 'meals_info',
     ];
 
     public function itinerable()
