@@ -44,8 +44,9 @@ class IndonesiaDestinationController extends Controller
             'duration_nights' => 'required|integer',
             'interest_tags' => 'nullable|array',
             'interest_tags.*' => 'string|max:50',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
         ]);
 
@@ -63,7 +64,14 @@ class IndonesiaDestinationController extends Controller
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
             'interest_tags' => $request->interest_tags,
+            'itinerary_pdf_path' => null,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $path = $request->file('itinerary_pdf')->store('tours/national/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+            $tour->save();
+        }
 
         $files = [];
         if ($request->hasFile('images')) {
@@ -120,10 +128,26 @@ class IndonesiaDestinationController extends Controller
             'base_price' => 'required|numeric',
             'interest_tags' => 'nullable|array',
             'interest_tags.*' => 'string|max:50',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $previous = $tour->itinerary_pdf_path;
+            $path = $request->file('itinerary_pdf')->store('tours/national/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+
+            if ($previous) {
+                $parsed = parse_url($previous, PHP_URL_PATH);
+                $publicPrefix = '/storage/';
+                if (is_string($parsed) && str_starts_with($parsed, $publicPrefix)) {
+                    $storagePath = substr($parsed, strlen($publicPrefix));
+                    Storage::disk('public')->delete($storagePath);
+                }
+            }
+        }
 
         $tour->update([
             'category_id' => $request->category_id,
@@ -140,6 +164,10 @@ class IndonesiaDestinationController extends Controller
             'terms_conditions' => $request->terms_conditions,
             'interest_tags' => $request->interest_tags,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $tour->save();
+        }
 
         $files = [];
         if ($request->hasFile('images')) {

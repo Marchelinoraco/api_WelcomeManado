@@ -41,7 +41,7 @@ class ManadoTourController extends Controller
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
         ]);
 
@@ -181,7 +181,7 @@ class ManadoTourController extends Controller
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
         ]);
 

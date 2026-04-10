@@ -12,7 +12,7 @@ class IndonesiaDestination extends Model
     protected $fillable = [
         'category_id', 'title', 'slug', 'description', 'base_price',
         'duration_days', 'duration_nights', 'airline_info', 'highlights',
-        'inclusions', 'exclusions', 'terms_conditions', 'interest_tags',
+        'inclusions', 'exclusions', 'terms_conditions', 'interest_tags', 'itinerary_pdf_path',
     ];
 
     protected $casts = [

@@ -14,6 +14,7 @@ class InternationalTour extends Model
         'duration_days', 'duration_nights', 'airline_info', 'highlights',
         'inclusions', 'exclusions', 'terms_conditions',
         'visa_requirements', 'passport_validity',
+        'itinerary_pdf_path',
     ];
 
     public function category()

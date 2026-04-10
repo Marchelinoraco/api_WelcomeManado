@@ -4,7 +4,9 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IndonesiaDestinationController;
 use App\Http\Controllers\Api\InternationalTourController;
 use App\Http\Controllers\Api\ManadoTourController;
+use App\Http\Controllers\Api\HotelController;
 use App\Http\Controllers\Api\TourController;
+use App\Http\Controllers\Api\GalleryItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,3 +33,5 @@ Route::apiResource('categories', CategoryController::class);
 Route::apiResource('manado-tours', ManadoTourController::class);
 Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
 Route::apiResource('international-tours', InternationalTourController::class);
+Route::apiResource('hotels', HotelController::class);
+Route::apiResource('gallery-items', GalleryItemController::class);

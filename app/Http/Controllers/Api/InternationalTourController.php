@@ -48,8 +48,9 @@ class InternationalTourController extends Controller
             'base_price' => 'required|numeric',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
             'prices' => 'nullable|array|max:10',
             'prices.*.type' => 'required_with:prices|in:adult_twin,child_bed,child_no_bed',
@@ -79,6 +80,12 @@ class InternationalTourController extends Controller
             'visa_requirements' => $request->visa_requirements,
             'passport_validity' => $request->passport_validity,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $path = $request->file('itinerary_pdf')->store('tours/international/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+            $tour->save();
+        }
 
         $prices = $request->input('prices');
         if (is_array($prices) && count($prices) > 0) {
@@ -164,8 +171,9 @@ class InternationalTourController extends Controller
             'category_id' => 'required|exists:categories,id',
             'title' => 'required|string|max:255',
             'base_price' => 'required|numeric',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
-            'images' => 'nullable|array|max:3',
+            'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
             'prices' => 'nullable|array|max:10',
             'prices.*.type' => 'required_with:prices|in:adult_twin,child_bed,child_no_bed',
@@ -179,6 +187,21 @@ class InternationalTourController extends Controller
             'itineraries.*.title' => 'required_with:itineraries|string|max:255',
             'itineraries.*.description' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $previous = $tour->itinerary_pdf_path;
+            $path = $request->file('itinerary_pdf')->store('tours/international/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+
+            if ($previous) {
+                $parsed = parse_url($previous, PHP_URL_PATH);
+                $publicPrefix = '/storage/';
+                if (is_string($parsed) && str_starts_with($parsed, $publicPrefix)) {
+                    $storagePath = substr($parsed, strlen($publicPrefix));
+                    Storage::disk('public')->delete($storagePath);
+                }
+            }
+        }
 
         $tour->update([
             'category_id' => $request->category_id,
@@ -195,6 +218,10 @@ class InternationalTourController extends Controller
             'visa_requirements' => $request->visa_requirements,
             'passport_validity' => $request->passport_validity,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $tour->save();
+        }
 
         if ($request->has('prices')) {
             $prices = $request->input('prices');
