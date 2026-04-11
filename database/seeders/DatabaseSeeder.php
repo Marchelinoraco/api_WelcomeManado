@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             TourSeeder::class,
             HotelSeeder::class,
+            TransportationSeeder::class,
         ]);
 
         if (Schema::hasTable('gallery_items')) {

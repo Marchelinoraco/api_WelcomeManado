@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\ManadoTourController;
 use App\Http\Controllers\Api\HotelController;
 use App\Http\Controllers\Api\TourController;
 use App\Http\Controllers\Api\GalleryItemController;
+use App\Http\Controllers\Api\TransportationBookingController;
+use App\Http\Controllers\Api\TransportationController;
+use App\Http\Controllers\Api\TravelInfoItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,3 +38,6 @@ Route::apiResource('indonesia-destinations', IndonesiaDestinationController::cla
 Route::apiResource('international-tours', InternationalTourController::class);
 Route::apiResource('hotels', HotelController::class);
 Route::apiResource('gallery-items', GalleryItemController::class);
+Route::apiResource('transportations', TransportationController::class);
+Route::apiResource('transportation-bookings', TransportationBookingController::class);
+Route::apiResource('travel-info-items', TravelInfoItemController::class);
