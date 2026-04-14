@@ -8,6 +8,7 @@ use App\Models\IndonesiaDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class IndonesiaDestinationController extends Controller
 {
@@ -50,10 +51,13 @@ class IndonesiaDestinationController extends Controller
             'images.*' => 'image|max:5120',
         ]);
 
+        $slug = Str::slug($request->title);
+        $this->ensureSlugIsAvailable($slug);
+
         $tour = IndonesiaDestination::create([
             'category_id' => $request->category_id,
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $slug,
             'description' => $request->description,
             'base_price' => $request->base_price,
             'duration_days' => $request->duration_days,
@@ -134,6 +138,12 @@ class IndonesiaDestinationController extends Controller
             'images.*' => 'image|max:5120',
         ]);
 
+        $slug = $tour->slug ?: Str::slug($request->title);
+
+        if (! $tour->slug) {
+            $this->ensureSlugIsAvailable($slug, $tour->id);
+        }
+
         if ($request->hasFile('itinerary_pdf')) {
             $previous = $tour->itinerary_pdf_path;
             $path = $request->file('itinerary_pdf')->store('tours/national/itineraries', 'public');
@@ -152,7 +162,7 @@ class IndonesiaDestinationController extends Controller
         $tour->update([
             'category_id' => $request->category_id,
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $slug,
             'description' => $request->description,
             'base_price' => $request->base_price,
             'duration_days' => $request->duration_days,
@@ -207,5 +217,20 @@ class IndonesiaDestinationController extends Controller
         $tour->delete();
 
         return response()->json(['success' => true, 'message' => 'Destination deleted successfully']);
+    }
+
+    private function ensureSlugIsAvailable(string $slug, ?int $ignoreId = null): void
+    {
+        $query = IndonesiaDestination::query()->where('slug', $slug);
+
+        if ($ignoreId !== null) {
+            $query->whereKeyNot($ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'title' => ['Judul destinasi ini menghasilkan slug yang sudah dipakai. Gunakan judul lain yang lebih spesifik.'],
+            ]);
+        }
     }
 }

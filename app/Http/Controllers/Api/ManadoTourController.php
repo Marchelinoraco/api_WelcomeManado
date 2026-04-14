@@ -8,6 +8,7 @@ use App\Models\ManadoTour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ManadoTourController extends Controller
 {
@@ -110,10 +111,13 @@ class ManadoTourController extends Controller
             $durationHoursMax = null;
         }
 
+        $slug = Str::slug($request->title);
+        $this->ensureSlugIsAvailable($slug);
+
         $tour = ManadoTour::create([
             'category_id' => $request->category_id,
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $slug,
             'description' => $request->description,
             'base_price' => $request->base_price,
             'tour_type' => $tourType,
@@ -250,10 +254,16 @@ class ManadoTourController extends Controller
             $durationHoursMax = null;
         }
 
+        $slug = $tour->slug ?: Str::slug($request->title);
+
+        if (! $tour->slug) {
+            $this->ensureSlugIsAvailable($slug, $tour->id);
+        }
+
         $tour->update([
             'category_id' => $request->category_id,
             'title' => $request->title,
-            'slug' => Str::slug($request->title),
+            'slug' => $slug,
             'description' => $request->description,
             'base_price' => $request->base_price,
             'tour_type' => $tourType,
@@ -306,5 +316,20 @@ class ManadoTourController extends Controller
         $tour->delete();
 
         return response()->json(['success' => true, 'message' => 'Tour deleted successfully']);
+    }
+
+    private function ensureSlugIsAvailable(string $slug, ?int $ignoreId = null): void
+    {
+        $query = ManadoTour::query()->where('slug', $slug);
+
+        if ($ignoreId !== null) {
+            $query->whereKeyNot($ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'title' => ['Judul tour ini menghasilkan slug yang sudah dipakai. Gunakan judul lain yang lebih spesifik.'],
+            ]);
+        }
     }
 }
