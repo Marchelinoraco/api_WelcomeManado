@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Storage;
 
 class GalleryItemController extends Controller
 {
+    private function deleteStoredImage(?string $imagePath): void
+    {
+        $parsed = parse_url((string) $imagePath, PHP_URL_PATH);
+        $publicPrefix = '/storage/';
+
+        if (is_string($parsed) && str_starts_with($parsed, $publicPrefix)) {
+            $storagePath = substr($parsed, strlen($publicPrefix));
+            Storage::disk('public')->delete($storagePath);
+        }
+    }
+
     public function index(Request $request)
     {
         $query = GalleryItem::query();
@@ -128,8 +139,12 @@ class GalleryItemController extends Controller
         }
 
         if ($request->hasFile('image')) {
+            $previousImage = $item->image_path;
             $path = $request->file('image')->store('gallery/items', 'public');
             $update['image_path'] = url(Storage::url($path));
+            if ($previousImage) {
+                $this->deleteStoredImage($previousImage);
+            }
         }
 
         $finalYoutube = $update['youtube_url'] ?? null;
@@ -157,6 +172,9 @@ class GalleryItemController extends Controller
             return response()->json(['success' => false, 'message' => 'Gallery item not found'], 404);
         }
 
+        if ($item->image_path) {
+            $this->deleteStoredImage($item->image_path);
+        }
         $item->delete();
 
         return response()->json(['success' => true, 'message' => 'Gallery item deleted successfully']);

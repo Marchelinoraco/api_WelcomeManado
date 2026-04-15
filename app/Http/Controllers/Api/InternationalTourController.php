@@ -12,6 +12,39 @@ use Illuminate\Validation\ValidationException;
 
 class InternationalTourController extends Controller
 {
+    private function deleteStoredFile(?string $fileUrl): void
+    {
+        $parsed = parse_url((string) $fileUrl, PHP_URL_PATH);
+        $publicPrefix = '/storage/';
+        if (is_string($parsed) && str_starts_with($parsed, $publicPrefix)) {
+            $storagePath = substr($parsed, strlen($publicPrefix));
+            Storage::disk('public')->delete($storagePath);
+        }
+    }
+
+    private function syncPrimaryGallery(InternationalTour $tour, ?int $primaryGalleryId = null): void
+    {
+        $galleries = $tour->galleries()->orderBy('id')->get();
+
+        if ($galleries->isEmpty()) {
+            return;
+        }
+
+        $primary = $primaryGalleryId
+            ? $galleries->firstWhere('id', $primaryGalleryId)
+            : $galleries->firstWhere('is_primary', true);
+
+        if (! $primary) {
+            $primary = $galleries->first();
+        }
+
+        $tour->galleries()->where('id', '!=', $primary->id)->update(['is_primary' => false]);
+        if (! $primary->is_primary) {
+            $primary->is_primary = true;
+            $primary->save();
+        }
+    }
+
     public function index()
     {
         $tours = InternationalTour::with(['category', 'galleries'])->latest()->get();
@@ -123,7 +156,7 @@ class InternationalTourController extends Controller
             $files = [$request->file('primary_image')];
         }
 
-        foreach (array_slice($files, 0, 3) as $idx => $file) {
+        foreach (array_slice($files, 0, 5) as $idx => $file) {
             $path = $file->store('tours/international', 'public');
             $tour->galleries()->create([
                 'image_path' => url(Storage::url($path)),
@@ -179,6 +212,10 @@ class InternationalTourController extends Controller
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
+            'retain_image_ids' => 'nullable|array|max:5',
+            'retain_image_ids.*' => 'integer',
+            'slot_order' => 'nullable|array|max:5',
+            'slot_order.*' => 'string',
             'prices' => 'nullable|array|max:10',
             'prices.*.type' => 'required_with:prices|in:adult_twin,child_bed,child_no_bed',
             'prices.*.price' => 'required_with:prices|numeric|min:0',
@@ -203,14 +240,7 @@ class InternationalTourController extends Controller
             $path = $request->file('itinerary_pdf')->store('tours/international/itineraries', 'public');
             $tour->itinerary_pdf_path = url(Storage::url($path));
 
-            if ($previous) {
-                $parsed = parse_url($previous, PHP_URL_PATH);
-                $publicPrefix = '/storage/';
-                if (is_string($parsed) && str_starts_with($parsed, $publicPrefix)) {
-                    $storagePath = substr($parsed, strlen($publicPrefix));
-                    Storage::disk('public')->delete($storagePath);
-                }
-            }
+            $this->deleteStoredFile($previous);
         }
 
         $tour->update([
@@ -264,6 +294,21 @@ class InternationalTourController extends Controller
             }
         }
 
+        $retainIds = collect($request->input('retain_image_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        $existingGalleries = $tour->galleries()->get();
+        $galleriesToDelete = $existingGalleries->filter(
+            fn (Gallery $gallery) => ! $retainIds->contains($gallery->id)
+        );
+
+        foreach ($galleriesToDelete as $gallery) {
+            $this->deleteStoredFile($gallery->image_path);
+            $gallery->delete();
+        }
+
         $files = [];
         if ($request->hasFile('images')) {
             $files = $request->file('images');
@@ -271,20 +316,50 @@ class InternationalTourController extends Controller
             $files = [$request->file('primary_image')];
         }
 
-        if (count($files) > 0) {
-            Gallery::query()
-                ->where('galleryable_type', InternationalTour::class)
-                ->where('galleryable_id', $tour->id)
-                ->delete();
+        $remainingCount = $tour->galleries()->count();
+        $newCount = count($files);
+        if ($remainingCount + $newCount > 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maksimal 5 gambar per tour',
+            ], 422);
+        }
 
-            foreach (array_slice($files, 0, 3) as $idx => $file) {
-                $path = $file->store('tours/international', 'public');
-                $tour->galleries()->create([
-                    'image_path' => url(Storage::url($path)),
-                    'is_primary' => $idx === 0,
-                ]);
+        $createdGalleryIds = [];
+        foreach (array_slice($files, 0, 5) as $index => $file) {
+            $path = $file->store('tours/international', 'public');
+            $gallery = $tour->galleries()->create([
+                'image_path' => url(Storage::url($path)),
+                'is_primary' => false,
+            ]);
+            $createdGalleryIds[$index] = $gallery->id;
+        }
+
+        $requestedPrimaryId = null;
+        $slotOrder = collect($request->input('slot_order', []))
+            ->filter(fn ($entry) => is_string($entry) && $entry !== '')
+            ->values();
+
+        foreach ($slotOrder as $entry) {
+            if (str_starts_with($entry, 'existing:')) {
+                $candidateId = (int) substr($entry, 9);
+                if ($tour->galleries()->where('id', $candidateId)->exists()) {
+                    $requestedPrimaryId = $candidateId;
+                    break;
+                }
+            }
+
+            if (str_starts_with($entry, 'new:')) {
+                $newIndex = (int) substr($entry, 4);
+                $candidateId = $createdGalleryIds[$newIndex] ?? null;
+                if ($candidateId && $tour->galleries()->where('id', $candidateId)->exists()) {
+                    $requestedPrimaryId = $candidateId;
+                    break;
+                }
             }
         }
+
+        $this->syncPrimaryGallery($tour, $requestedPrimaryId);
 
         return response()->json([
             'success' => true,
@@ -298,6 +373,12 @@ class InternationalTourController extends Controller
         $tour = InternationalTour::find($id);
         if (! $tour) {
             return response()->json(['success' => false, 'message' => 'International tour not found'], 404);
+        }
+        if ($tour->itinerary_pdf_path) {
+            $this->deleteStoredFile($tour->itinerary_pdf_path);
+        }
+        foreach ($tour->galleries as $gallery) {
+            $this->deleteStoredFile($gallery->image_path);
         }
         $tour->delete();
 
