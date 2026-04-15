@@ -4,12 +4,52 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
+use App\Models\HotelImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class HotelController extends Controller
 {
+    private function deleteStoredImage(?string $imagePath): void
+    {
+        $parsed = parse_url((string) $imagePath, PHP_URL_PATH);
+        $prefix = '/storage/';
+
+        if (is_string($parsed) && str_starts_with($parsed, $prefix)) {
+            $rel = substr($parsed, strlen($prefix));
+            Storage::disk('public')->delete($rel);
+        }
+    }
+
+    private function syncPrimaryImage(Hotel $hotel, ?int $primaryImageId = null): void
+    {
+        $images = $hotel->images()->orderBy('id')->get();
+
+        if ($images->isEmpty()) {
+            $hotel->primary_image = null;
+            $hotel->save();
+            return;
+        }
+
+        $primary = $primaryImageId
+            ? $images->firstWhere('id', $primaryImageId)
+            : $images->firstWhere('is_primary', true);
+
+        if (! $primary) {
+            $primary = $images->first();
+        }
+
+        $hotel->images()->where('id', '!=', $primary->id)->update(['is_primary' => false]);
+        if (! $primary->is_primary) {
+            $primary->is_primary = true;
+            $primary->save();
+        }
+
+        $hotel->primary_image = $primary->image_path;
+        $hotel->save();
+    }
+
     public function index(Request $request)
     {
         $query = Hotel::query()->with('images');
@@ -50,6 +90,11 @@ class HotelController extends Controller
             'description' => 'nullable|string',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
+            'retain_image_ids' => 'nullable|array|max:5',
+            'retain_image_ids.*' => 'integer',
+            'primary_image_id' => 'nullable|integer',
+            'slot_order' => 'nullable|array|max:5',
+            'slot_order.*' => 'string',
         ]);
 
         $hotel = Hotel::create([
@@ -94,6 +139,11 @@ class HotelController extends Controller
             'description' => 'nullable|string',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
+            'retain_image_ids' => 'nullable|array|max:5',
+            'retain_image_ids.*' => 'integer',
+            'primary_image_id' => 'nullable|integer',
+            'slot_order' => 'nullable|array|max:5',
+            'slot_order.*' => 'string',
         ]);
 
         $hotel->update([
@@ -105,33 +155,86 @@ class HotelController extends Controller
             'description' => $request->description,
         ]);
 
-        if ($request->hasFile('images')) {
-            $existingCount = $hotel->images()->count();
-            $newCount = count($request->file('images') ?? []);
-            if ($existingCount + $newCount > 5) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Maksimal 5 gambar per hotel',
-                ], 422);
-            }
-            foreach ($request->file('images') as $file) {
+        $retainIds = collect($request->input('retain_image_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values();
+
+        $existingImages = $hotel->images()->get();
+        $imagesToDelete = $existingImages->filter(
+            fn (HotelImage $image) => ! $retainIds->contains($image->id)
+        );
+
+        foreach ($imagesToDelete as $image) {
+            $this->deleteStoredImage($image->image_path);
+            $image->delete();
+        }
+
+        $newFiles = $request->file('images') ?? [];
+        $remainingCount = $hotel->images()->count();
+        $newCount = count($newFiles);
+
+        if ($remainingCount + $newCount > 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maksimal 5 gambar per hotel',
+            ], 422);
+        }
+
+        $createdImageIds = [];
+
+        if ($newCount > 0) {
+            foreach ($newFiles as $index => $file) {
                 $path = $file->store('hotels', 'public');
                 $url = url(Storage::url($path));
-                $hotel->images()->create([
+                $image = $hotel->images()->create([
                     'image_path' => $url,
                     'is_primary' => false,
                 ]);
+                $createdImageIds[$index] = $image->id;
             }
-            if (! $hotel->primary_image) {
-                $first = $hotel->images()->first();
-                if ($first) {
-                    $first->is_primary = true;
-                    $first->save();
-                    $hotel->primary_image = $first->image_path;
-                    $hotel->save();
+        }
+
+        $requestedPrimaryId = $request->filled('primary_image_id')
+            ? (int) $request->input('primary_image_id')
+            : null;
+
+        $slotOrder = collect($request->input('slot_order', []))
+            ->filter(fn ($entry) => is_string($entry) && $entry !== '')
+            ->values();
+
+        if ($slotOrder->isNotEmpty()) {
+            foreach ($slotOrder as $entry) {
+                if (str_starts_with($entry, 'existing:')) {
+                    $candidateId = (int) substr($entry, 9);
+                    if ($hotel->images()->where('id', $candidateId)->exists()) {
+                        $requestedPrimaryId = $candidateId;
+                        break;
+                    }
+                }
+
+                if (str_starts_with($entry, 'new:')) {
+                    $newIndex = (int) substr($entry, 4);
+                    $candidateId = $createdImageIds[$newIndex] ?? null;
+                    if ($candidateId && $hotel->images()->where('id', $candidateId)->exists()) {
+                        $requestedPrimaryId = $candidateId;
+                        break;
+                    }
                 }
             }
         }
+
+        if ($requestedPrimaryId) {
+            $hasRequestedPrimary = $hotel->images()->where('id', $requestedPrimaryId)->exists();
+            if (! $hasRequestedPrimary) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Primary image tidak valid',
+                ], 422);
+            }
+        }
+
+        $this->syncPrimaryImage($hotel, $requestedPrimaryId);
 
         return response()->json(['success' => true, 'data' => $hotel->load('images')]);
     }
@@ -143,12 +246,7 @@ class HotelController extends Controller
             return response()->json(['success' => false, 'message' => 'Hotel not found'], 404);
         }
         foreach ($hotel->images as $img) {
-            $parsed = parse_url($img->image_path, PHP_URL_PATH);
-            $prefix = '/storage/';
-            if (is_string($parsed) && str_starts_with($parsed, $prefix)) {
-                $rel = substr($parsed, strlen($prefix));
-                Storage::disk('public')->delete($rel);
-            }
+            $this->deleteStoredImage($img->image_path);
         }
         $hotel->delete();
         return response()->json(['success' => true]);
