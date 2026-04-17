@@ -16,6 +16,9 @@ class Hotel extends Model
         'category',
         'stars',
         'description',
+        'description_en',
+        'description_ko',
+        'description_zh',
         'primary_image',
     ];
 

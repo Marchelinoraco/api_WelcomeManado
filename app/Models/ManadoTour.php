@@ -10,7 +10,9 @@ class ManadoTour extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'title', 'slug', 'description', 'base_price', 'tour_type',
+        'category_id', 'title', 'slug', 'description',
+        'description_en', 'description_ko', 'description_zh',
+        'base_price', 'tour_type',
         'duration_days',
         'duration_nights',
         'duration_hours',
