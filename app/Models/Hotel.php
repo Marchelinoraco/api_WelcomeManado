@@ -19,11 +19,13 @@ class Hotel extends Model
         'description_en',
         'description_ko',
         'description_zh',
+        'facilities',
         'primary_image',
     ];
 
     protected $casts = [
         'stars' => 'integer',
+        'facilities' => 'array',
     ];
 
     public function images()

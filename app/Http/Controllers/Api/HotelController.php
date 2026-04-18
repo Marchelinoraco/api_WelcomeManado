@@ -11,6 +11,49 @@ use Illuminate\Support\Str;
 
 class HotelController extends Controller
 {
+    private function normalizeFacilities(mixed $rawFacilities): array
+    {
+        if (is_string($rawFacilities)) {
+            $rawFacilities = preg_split('/[\r\n,;|]+/', $rawFacilities) ?: [];
+        } elseif (is_array($rawFacilities)) {
+            $rawFacilities = collect($rawFacilities)->map(function ($item) {
+                if (is_string($item)) {
+                    return $item;
+                }
+
+                if (is_array($item)) {
+                    return $item['name_id']
+                        ?? $item['label_id']
+                        ?? $item['name']
+                        ?? $item['label']
+                        ?? $item['title']
+                        ?? null;
+                }
+
+                return null;
+            })->all();
+        } else {
+            return [];
+        }
+
+        $seen = [];
+
+        return collect($rawFacilities)
+            ->map(fn ($item) => preg_replace('/\s+/', ' ', trim((string) $item)))
+            ->filter()
+            ->reject(function ($item) use (&$seen) {
+                $key = mb_strtolower($item);
+                if (in_array($key, $seen, true)) {
+                    return true;
+                }
+
+                $seen[] = $key;
+                return false;
+            })
+            ->values()
+            ->all();
+    }
+
     private function deleteStoredImage(?string $imagePath): void
     {
         $parsed = parse_url((string) $imagePath, PHP_URL_PATH);
@@ -91,6 +134,7 @@ class HotelController extends Controller
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
+            'facilities' => 'nullable',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
             'retain_image_ids' => 'nullable|array|max:5',
@@ -110,6 +154,7 @@ class HotelController extends Controller
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,
             'description_zh' => $request->description_zh,
+            'facilities' => $this->normalizeFacilities($request->input('facilities')),
         ]);
 
         if ($request->hasFile('images')) {
@@ -146,6 +191,7 @@ class HotelController extends Controller
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
+            'facilities' => 'nullable',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
             'retain_image_ids' => 'nullable|array|max:5',
@@ -165,6 +211,7 @@ class HotelController extends Controller
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,
             'description_zh' => $request->description_zh,
+            'facilities' => $this->normalizeFacilities($request->input('facilities')),
         ]);
 
         $retainIds = collect($request->input('retain_image_ids', []))
