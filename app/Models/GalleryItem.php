@@ -11,6 +11,9 @@ class GalleryItem extends Model
 
     protected $fillable = [
         'title',
+        'title_en',
+        'title_ko',
+        'title_zh',
         'image_path',
         'video_name',
         'youtube_url',
@@ -18,4 +21,3 @@ class GalleryItem extends Model
         'is_active',
     ];
 }
-

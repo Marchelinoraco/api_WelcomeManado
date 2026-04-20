@@ -24,6 +24,15 @@ class GalleryItemController extends Controller
     {
         $query = GalleryItem::query();
 
+        if ($search = $request->input('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('title_en', 'like', "%{$search}%")
+                    ->orWhere('title_ko', 'like', "%{$search}%")
+                    ->orWhere('title_zh', 'like', "%{$search}%");
+            });
+        }
+
         if ($request->has('active')) {
             $query->where('is_active', filter_var($request->input('active'), FILTER_VALIDATE_BOOLEAN));
         }
@@ -62,6 +71,9 @@ class GalleryItemController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'title_en' => 'nullable|string|max:255',
+            'title_ko' => 'nullable|string|max:255',
+            'title_zh' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:5120',
             'video_name' => 'nullable|string|max:255',
             'youtube_url' => 'nullable|url|max:255',
@@ -87,6 +99,9 @@ class GalleryItemController extends Controller
 
         $item = GalleryItem::create([
             'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
+            'title_ko' => $validated['title_ko'] ?? null,
+            'title_zh' => $validated['title_zh'] ?? null,
             'image_path' => $imageUrl,
             'video_name' => $validated['video_name'] ?? null,
             'youtube_url' => $validated['youtube_url'] ?? null,
@@ -120,6 +135,9 @@ class GalleryItemController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'title_en' => 'nullable|string|max:255',
+            'title_ko' => 'nullable|string|max:255',
+            'title_zh' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:5120',
             'video_name' => 'nullable|string|max:255',
             'youtube_url' => 'nullable|url|max:255',
@@ -129,6 +147,9 @@ class GalleryItemController extends Controller
 
         $update = [
             'title' => $validated['title'],
+            'title_en' => $validated['title_en'] ?? null,
+            'title_ko' => $validated['title_ko'] ?? null,
+            'title_zh' => $validated['title_zh'] ?? null,
             'video_name' => $validated['video_name'] ?? null,
             'youtube_url' => $validated['youtube_url'] ?? null,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
