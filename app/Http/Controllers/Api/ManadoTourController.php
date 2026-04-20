@@ -12,6 +12,62 @@ use Illuminate\Validation\ValidationException;
 
 class ManadoTourController extends Controller
 {
+    private function normalizeItineraries(mixed $rawItineraries): array
+    {
+        if (is_string($rawItineraries)) {
+            $decoded = json_decode($rawItineraries, true);
+            $rawItineraries = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+        }
+
+        if (! is_array($rawItineraries)) {
+            return [];
+        }
+
+        return collect($rawItineraries)
+            ->filter(fn ($item) => is_array($item))
+            ->map(function (array $item) {
+                $dayNumber = (int) ($item['day_number'] ?? 0);
+                $title = trim((string) ($item['title'] ?? ''));
+                $description = trim((string) ($item['description'] ?? ''));
+                $hotelInfo = trim((string) ($item['hotel_info'] ?? ''));
+                $mealsInfo = trim((string) ($item['meals_info'] ?? ''));
+
+                if ($dayNumber < 1) {
+                    return null;
+                }
+
+                if ($title === '' && $description === '' && $hotelInfo === '' && $mealsInfo === '') {
+                    return null;
+                }
+
+                return [
+                    'day_number' => $dayNumber,
+                    'title' => $title !== '' ? $title : "Day {$dayNumber}",
+                    'description' => $description !== '' ? $description : null,
+                    'hotel_info' => $hotelInfo !== '' ? $hotelInfo : null,
+                    'meals_info' => $mealsInfo !== '' ? $mealsInfo : null,
+                ];
+            })
+            ->filter()
+            ->sortBy('day_number')
+            ->values()
+            ->all();
+    }
+
+    private function syncItineraries(ManadoTour $tour, mixed $rawItineraries): void
+    {
+        $tour->itineraries()->delete();
+
+        $itineraries = $this->normalizeItineraries($rawItineraries);
+        if (empty($itineraries)) {
+            return;
+        }
+
+        foreach ($itineraries as $itinerary) {
+            $tour->itineraries()->create($itinerary);
+        }
+    }
+
     private function deleteStoredFile(?string $fileUrl): void
     {
         $parsed = parse_url((string) $fileUrl, PHP_URL_PATH);
@@ -77,6 +133,7 @@ class ManadoTourController extends Controller
             'duration_hours_max' => 'nullable|integer|min:1',
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
+            'itineraries' => 'nullable',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
@@ -186,10 +243,12 @@ class ManadoTourController extends Controller
             ]);
         }
 
+        $this->syncItineraries($tour, $request->input('itineraries'));
+
         return response()->json([
             'success' => true,
             'message' => 'Tour created successfully',
-            'data' => $tour,
+            'data' => $tour->load(['category', 'itineraries', 'galleries']),
         ], 201);
     }
 
@@ -227,6 +286,7 @@ class ManadoTourController extends Controller
             'duration_hours_max' => 'nullable|integer|min:1',
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
+            'itineraries' => 'nullable',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
@@ -394,11 +454,12 @@ class ManadoTourController extends Controller
         }
 
         $this->syncPrimaryGallery($tour, $requestedPrimaryId);
+        $this->syncItineraries($tour, $request->input('itineraries'));
 
         return response()->json([
             'success' => true,
             'message' => 'Tour updated successfully',
-            'data' => $tour,
+            'data' => $tour->load(['category', 'itineraries', 'galleries']),
         ]);
     }
 
