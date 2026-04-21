@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\GalleryItemController;
 use App\Http\Controllers\Api\TransportationBookingController;
 use App\Http\Controllers\Api\TransportationController;
 use App\Http\Controllers\Api\TravelInfoItemController;
+use App\Http\Controllers\Api\HeroImageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Public API
+Route::get('/hero-images', [HeroImageController::class, 'publicIndex']);
 Route::get('/tours', [TourController::class, 'index']);
 Route::get('/tours/{slug}', [TourController::class, 'show']);
 Route::get('/wisatalokal/categories', [CategoryController::class, 'byType'])->defaults('type', 'local');
@@ -36,6 +38,7 @@ Route::apiResource('categories', CategoryController::class);
 Route::apiResource('manado-tours', ManadoTourController::class);
 Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
 Route::apiResource('international-tours', InternationalTourController::class);
+Route::apiResource('hero-images', HeroImageController::class);
 Route::apiResource('hotels', HotelController::class);
 Route::apiResource('gallery-items', GalleryItemController::class);
 Route::apiResource('transportations', TransportationController::class);
