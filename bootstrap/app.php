@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(HandleCors::class);
+        $middleware->alias([
+            'log.admin' => \App\Http\Middleware\LogAdminActivity::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

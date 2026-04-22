@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AdminActivityLogController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IndonesiaDestinationController;
 use App\Http\Controllers\Api\InternationalTourController;
@@ -14,11 +16,10 @@ use App\Http\Controllers\Api\HeroImageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// ─── Auth (Public) ───────────────────────────────────────────
+Route::post('/admin/login', [AuthController::class, 'login']);
 
-// Public API
+// ─── Public API ──────────────────────────────────────────────
 Route::get('/hero-images', [HeroImageController::class, 'publicIndex']);
 Route::get('/tours', [TourController::class, 'index']);
 Route::get('/tours/{slug}', [TourController::class, 'show']);
@@ -33,14 +34,24 @@ Route::get('/nasional/tours/{slug}', [TourController::class, 'nationalShow']);
 Route::get('/internasional/tours', [TourController::class, 'internationalIndex']);
 Route::get('/internasional/tours/{slug}', [TourController::class, 'internationalShow']);
 
-// Admin API
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('manado-tours', ManadoTourController::class);
-Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
-Route::apiResource('international-tours', InternationalTourController::class);
-Route::apiResource('hero-images', HeroImageController::class);
-Route::apiResource('hotels', HotelController::class);
-Route::apiResource('gallery-items', GalleryItemController::class);
-Route::apiResource('transportations', TransportationController::class);
-Route::apiResource('transportation-bookings', TransportationBookingController::class);
-Route::apiResource('travel-info-items', TravelInfoItemController::class);
+// ─── Admin API (Protected) ──────────────────────────────────
+Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
+    // Auth
+    Route::post('/admin/logout', [AuthController::class, 'logout']);
+    Route::get('/admin/me', [AuthController::class, 'me']);
+
+    // Activity Logs
+    Route::get('/admin/activity-logs', [AdminActivityLogController::class, 'index']);
+
+    // Resources
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('manado-tours', ManadoTourController::class);
+    Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
+    Route::apiResource('international-tours', InternationalTourController::class);
+    Route::apiResource('hero-images', HeroImageController::class);
+    Route::apiResource('hotels', HotelController::class);
+    Route::apiResource('gallery-items', GalleryItemController::class);
+    Route::apiResource('transportations', TransportationController::class);
+    Route::apiResource('transportation-bookings', TransportationBookingController::class);
+    Route::apiResource('travel-info-items', TravelInfoItemController::class);
+});
