@@ -45,11 +45,12 @@ class IndonesiaDestinationController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $tours = IndonesiaDestination::with(['category', 'galleries'])->latest()->get();
+        $perPage = $request->integer('per_page', 15);
+        $tours = IndonesiaDestination::with(['category', 'galleries'])->latest()->paginate($perPage);
 
-        $tours->each(function ($t) {
+        $tours->getCollection()->each(function ($t) {
             $cover = $t->galleries?->firstWhere('is_primary', true) ?? $t->galleries?->first();
             $t->cover_image = $cover?->image_path;
         });

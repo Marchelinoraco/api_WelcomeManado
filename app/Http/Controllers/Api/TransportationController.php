@@ -26,7 +26,8 @@ class TransportationController extends Controller
             }
         }
 
-        $items = $query->orderBy('created_at', 'desc')->paginate(20);
+        $perPage = $request->integer('per_page', 15);
+        $items = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json(['success' => true, 'data' => $items]);
     }
