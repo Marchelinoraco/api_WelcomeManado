@@ -13,10 +13,14 @@ class InternationalTour extends Model
         'category_id', 'title', 'slug', 'description',
         'description_en', 'description_ko', 'description_zh',
         'base_price',
-        'duration_days', 'duration_nights', 'airline_info', 'highlights',
+        'duration_days', 'duration_nights', 'departure_periods', 'airline_info', 'highlights',
         'inclusions', 'exclusions', 'terms_conditions',
         'visa_requirements', 'passport_validity',
         'itinerary_pdf_path',
+    ];
+
+    protected $casts = [
+        'departure_periods' => 'array',
     ];
 
     public function category()

@@ -75,6 +75,12 @@ class InternationalTourController extends Controller
                 $request->merge(['itineraries' => $decoded]);
             }
         }
+        if (is_string($request->input('departure_periods'))) {
+            $decoded = json_decode($request->input('departure_periods'), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $request->merge(['departure_periods' => $decoded]);
+            }
+        }
 
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -86,6 +92,8 @@ class InternationalTourController extends Controller
             'base_price' => 'required|numeric',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
+            'departure_periods' => 'nullable|array',
+            'departure_periods.*' => 'nullable|string|max:255',
             'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
@@ -117,6 +125,7 @@ class InternationalTourController extends Controller
             'base_price' => $request->base_price,
             'duration_days' => $request->duration_days,
             'duration_nights' => $request->duration_nights,
+            'departure_periods' => $request->departure_periods,
             'highlights' => $request->highlights,
             'inclusions' => $request->inclusions,
             'exclusions' => $request->exclusions,
@@ -210,6 +219,12 @@ class InternationalTourController extends Controller
                 $request->merge(['itineraries' => $decoded]);
             }
         }
+        if (is_string($request->input('departure_periods'))) {
+            $decoded = json_decode($request->input('departure_periods'), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $request->merge(['departure_periods' => $decoded]);
+            }
+        }
 
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -219,6 +234,8 @@ class InternationalTourController extends Controller
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
             'base_price' => 'required|numeric',
+            'departure_periods' => 'nullable|array',
+            'departure_periods.*' => 'nullable|string|max:255',
             'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
@@ -265,6 +282,7 @@ class InternationalTourController extends Controller
             'base_price' => $request->base_price,
             'duration_days' => $request->duration_days,
             'duration_nights' => $request->duration_nights,
+            'departure_periods' => $request->departure_periods,
             'highlights' => $request->highlights,
             'inclusions' => $request->inclusions,
             'exclusions' => $request->exclusions,

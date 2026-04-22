@@ -21,6 +21,17 @@ Route::post('/admin/login', [AuthController::class, 'login']);
 
 // ─── Public API ──────────────────────────────────────────────
 Route::get('/hero-images', [HeroImageController::class, 'publicIndex']);
+Route::get('/gallery-items', [GalleryItemController::class, 'index']);
+Route::get('/gallery-items/{gallery_item}', [GalleryItemController::class, 'show']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}', [CategoryController::class, 'show']);
+Route::get('/hotels', [HotelController::class, 'index']);
+Route::get('/hotels/{hotel}', [HotelController::class, 'show']);
+Route::get('/travel-info-items', [TravelInfoItemController::class, 'index']);
+Route::get('/travel-info-items/{travel_info_item}', [TravelInfoItemController::class, 'show']);
+Route::get('/transportations', [TransportationController::class, 'index']);
+Route::get('/transportations/{transportation}', [TransportationController::class, 'show']);
+Route::post('/transportation-bookings', [TransportationBookingController::class, 'store']);
 Route::get('/tours', [TourController::class, 'index']);
 Route::get('/tours/{slug}', [TourController::class, 'show']);
 Route::get('/wisatalokal/categories', [CategoryController::class, 'byType'])->defaults('type', 'local');
@@ -44,14 +55,19 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     Route::get('/admin/activity-logs', [AdminActivityLogController::class, 'index']);
 
     // Resources
-    Route::apiResource('categories', CategoryController::class);
+    // Entities that are publicly readable (except index/show):
+    Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+    Route::apiResource('hero-images', HeroImageController::class)->except(['index', 'show']);
+    Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);
+    Route::apiResource('gallery-items', GalleryItemController::class)->except(['index', 'show']);
+    Route::apiResource('transportations', TransportationController::class)->except(['index', 'show']);
+    Route::apiResource('travel-info-items', TravelInfoItemController::class)->except(['index', 'show']);
+
+    // Admin-only entirely (Tours manage themselves via TourController for public):
     Route::apiResource('manado-tours', ManadoTourController::class);
     Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
     Route::apiResource('international-tours', InternationalTourController::class);
-    Route::apiResource('hero-images', HeroImageController::class);
-    Route::apiResource('hotels', HotelController::class);
-    Route::apiResource('gallery-items', GalleryItemController::class);
-    Route::apiResource('transportations', TransportationController::class);
-    Route::apiResource('transportation-bookings', TransportationBookingController::class);
-    Route::apiResource('travel-info-items', TravelInfoItemController::class);
+
+    // Bookings are publicly creatable, but admin-only readable/updatable/deletable:
+    Route::apiResource('transportation-bookings', TransportationBookingController::class)->except(['store']);
 });

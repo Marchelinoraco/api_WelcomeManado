@@ -134,6 +134,7 @@ class ManadoTourController extends Controller
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
             'itineraries' => 'nullable',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
@@ -226,7 +227,14 @@ class ManadoTourController extends Controller
             'inclusions' => $request->inclusions,
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
+            'itinerary_pdf_path' => null,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $path = $request->file('itinerary_pdf')->store('tours/manado/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+            $tour->save();
+        }
 
         $files = [];
         if ($request->hasFile('images')) {
@@ -287,6 +295,7 @@ class ManadoTourController extends Controller
             'duration_days' => 'nullable|integer|min:0',
             'duration_nights' => 'nullable|integer|min:0',
             'itineraries' => 'nullable',
+            'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|max:5120',
@@ -367,6 +376,16 @@ class ManadoTourController extends Controller
             $this->ensureSlugIsAvailable($slug, $tour->id);
         }
 
+        if ($request->hasFile('itinerary_pdf')) {
+            $previous = $tour->itinerary_pdf_path;
+            $path = $request->file('itinerary_pdf')->store('tours/manado/itineraries', 'public');
+            $tour->itinerary_pdf_path = url(Storage::url($path));
+
+            if ($previous) {
+                $this->deleteStoredFile($previous);
+            }
+        }
+
         $tour->update([
             'category_id' => $request->category_id,
             'title' => $request->title,
@@ -387,6 +406,10 @@ class ManadoTourController extends Controller
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
         ]);
+
+        if ($request->hasFile('itinerary_pdf')) {
+            $tour->save();
+        }
 
         $retainIds = collect($request->input('retain_image_ids', []))
             ->map(fn ($id) => (int) $id)
@@ -469,6 +492,11 @@ class ManadoTourController extends Controller
         if (! $tour) {
             return response()->json(['success' => false, 'message' => 'Tour not found'], 404);
         }
+
+        if ($tour->itinerary_pdf_path) {
+            $this->deleteStoredFile($tour->itinerary_pdf_path);
+        }
+
         foreach ($tour->galleries as $gallery) {
             $this->deleteStoredFile($gallery->image_path);
         }
