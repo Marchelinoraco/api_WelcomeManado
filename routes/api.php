@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminActivityLogController;
+use App\Http\Controllers\Api\AboutStorySectionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IndonesiaDestinationController;
@@ -21,6 +22,7 @@ Route::post('/admin/login', [AuthController::class, 'login']);
 
 // ─── Public API ──────────────────────────────────────────────
 Route::get('/hero-images', [HeroImageController::class, 'publicIndex']);
+Route::get('/about-story-section', [AboutStorySectionController::class, 'show']);
 Route::get('/gallery-items', [GalleryItemController::class, 'index']);
 Route::get('/gallery-items/{gallery_item}', [GalleryItemController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -53,6 +55,10 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
 
     // Activity Logs
     Route::get('/admin/activity-logs', [AdminActivityLogController::class, 'index']);
+
+    // About Story
+    Route::get('/admin/about-story-section', [AboutStorySectionController::class, 'adminShow']);
+    Route::put('/admin/about-story-section', [AboutStorySectionController::class, 'upsert']);
 
     // Resources
     // Entities that are publicly readable (except index/show):

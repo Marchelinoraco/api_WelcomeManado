@@ -13,8 +13,8 @@ class AdminActivityLogController extends Controller
      */
     public function index(Request $request)
     {
-        // Hanya admin utama yang bisa melihat log aktivitas
-        if ($request->user()->email !== 'admin@welcomemanado.com') {
+        // Sementara izinkan admin utama dan akun tertentu melihat log aktivitas
+        if (! in_array($request->user()->email, ['admin@welcomemanado.com', 'lino@gmail.com'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki akses ke halaman ini.',
