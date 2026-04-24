@@ -3,6 +3,10 @@
 use App\Http\Controllers\Api\AdminActivityLogController;
 use App\Http\Controllers\Api\AboutStorySectionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlogCategoryController;
+use App\Http\Controllers\Api\BlogHeroImageController;
+use App\Http\Controllers\Api\BlogPostController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\IndonesiaDestinationController;
 use App\Http\Controllers\Api\InternationalTourController;
@@ -51,6 +55,12 @@ Route::get('/nasional/tours/{slug}', [TourController::class, 'nationalShow']);
 Route::get('/internasional/tours', [TourController::class, 'internationalIndex']);
 Route::get('/internasional/tours/{slug}', [TourController::class, 'internationalShow']);
 
+// Blog
+Route::get('/blog/categories', [BlogCategoryController::class, 'index']);
+Route::get('/blog/posts', [BlogPostController::class, 'index']);
+Route::get('/blog/posts/{slug}', [BlogPostController::class, 'show']);
+Route::get('/blog/hero-image', [BlogHeroImageController::class, 'show']);
+
 // ─── Admin API (Protected) ──────────────────────────────────
 Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     // Auth
@@ -85,4 +95,16 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
 
     // Bookings are publicly creatable, but admin-only readable/updatable/deletable:
     Route::apiResource('transportation-bookings', TransportationBookingController::class)->except(['store']);
+
+    // Blog Management
+    Route::apiResource('blog-categories', BlogCategoryController::class)->except(['index']);
+    Route::apiResource('blog-posts', BlogPostController::class)->except(['index', 'show']);
+
+    // Image Upload (for CKEditor)
+    Route::post('/upload/image', [UploadController::class, 'image']);
+
+    // Blog Hero Image
+    Route::get('/admin/blog-hero-image', [BlogHeroImageController::class, 'adminShow']);
+    Route::post('/blog-hero-image', [BlogHeroImageController::class, 'upsert']);
+    Route::delete('/blog-hero-image', [BlogHeroImageController::class, 'destroy']);
 });
