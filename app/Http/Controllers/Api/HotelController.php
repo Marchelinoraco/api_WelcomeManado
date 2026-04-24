@@ -108,7 +108,7 @@ class HotelController extends Controller
             $query->where('category', $cat);
         }
 
-        $perPage = $request->integer('per_page', 15);
+        $perPage = $request->integer('per_page', 60);
         $hotels = $query->orderBy('created_at', 'desc')->paginate($perPage);
         return response()->json(['success' => true, 'data' => $hotels]);
     }
