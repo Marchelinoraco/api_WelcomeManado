@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AboutStorySection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AboutStorySectionController extends Controller
 {
@@ -37,10 +38,23 @@ class AboutStorySectionController extends Controller
             'travelers_label' => 'nullable|string|max:120',
             'since_text' => 'nullable|string|max:120',
             'pioneering_text' => 'nullable|string|max:120',
-            'image_url' => 'nullable|string|max:2048',
+            'image' => 'nullable|image|max:5120',
         ]);
 
         $section = AboutStorySection::query()->first();
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($section?->image_url) {
+                $parsed = parse_url($section->image_url, PHP_URL_PATH);
+                $storagePath = ltrim(str_replace('/storage/', '', $parsed), '/');
+                Storage::disk('public')->delete($storagePath);
+            }
+            $path = $request->file('image')->store('about', 'public');
+            $validated['image_url'] = url(Storage::url($path));
+        }
+
+        unset($validated['image']);
 
         if (! $section) {
             $section = AboutStorySection::create($validated);

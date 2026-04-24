@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transportation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TransportationController extends Controller
 {
@@ -48,19 +49,25 @@ class TransportationController extends Controller
             'type' => 'nullable|string|max:255',
             'price' => 'required|integer|min:0',
             'available' => 'nullable|boolean',
-            'image_url' => 'nullable|string|max:2048',
+            'image' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
         ]);
 
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('transportations', 'public');
+            $imageUrl = url(Storage::url($path));
+        }
+
         $item = Transportation::create([
             'name' => $request->name,
             'type' => $request->type,
             'price' => (int) $request->price,
             'available' => (bool) ($request->available ?? true),
-            'image_url' => $request->image_url,
+            'image_url' => $imageUrl,
             'description' => $request->description,
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,
@@ -82,19 +89,31 @@ class TransportationController extends Controller
             'type' => 'nullable|string|max:255',
             'price' => 'required|integer|min:0',
             'available' => 'nullable|boolean',
-            'image_url' => 'nullable|string|max:2048',
+            'image' => 'nullable|image|max:5120',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
         ]);
 
+        $imageUrl = $item->image_url;
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if ($item->image_url) {
+                $parsed = parse_url($item->image_url, PHP_URL_PATH);
+                $storagePath = ltrim(str_replace('/storage/', '', $parsed), '/');
+                Storage::disk('public')->delete($storagePath);
+            }
+            $path = $request->file('image')->store('transportations', 'public');
+            $imageUrl = url(Storage::url($path));
+        }
+
         $item->update([
             'name' => $request->name,
             'type' => $request->type,
             'price' => (int) $request->price,
             'available' => (bool) ($request->available ?? $item->available),
-            'image_url' => $request->image_url,
+            'image_url' => $imageUrl,
             'description' => $request->description,
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,

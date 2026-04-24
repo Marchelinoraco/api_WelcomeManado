@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     // About Story
     Route::get('/admin/about-story-section', [AboutStorySectionController::class, 'adminShow']);
     Route::put('/admin/about-story-section', [AboutStorySectionController::class, 'upsert']);
+    Route::post('/admin/about-story-section', [AboutStorySectionController::class, 'upsert']);
 
     // Resources
     // Entities that are publicly readable (except index/show):
