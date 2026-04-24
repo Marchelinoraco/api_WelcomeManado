@@ -12,6 +12,35 @@ use Illuminate\Validation\ValidationException;
 
 class IndonesiaDestinationController extends Controller
 {
+    private function syncItineraries(IndonesiaDestination $tour, mixed $rawItineraries): void
+    {
+        $tour->itineraries()->delete();
+
+        if (is_string($rawItineraries)) {
+            $decoded = json_decode($rawItineraries, true);
+            $rawItineraries = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+        }
+
+        if (!is_array($rawItineraries) || empty($rawItineraries)) {
+            return;
+        }
+
+        foreach ($rawItineraries as $item) {
+            if (!is_array($item)) continue;
+            $dayNumber = (int) ($item['day_number'] ?? 0);
+            $title = trim((string) ($item['title'] ?? ''));
+            if ($dayNumber < 1 || $title === '') continue;
+
+            $tour->itineraries()->create([
+                'day_number'  => $dayNumber,
+                'title'       => $title,
+                'description' => trim((string) ($item['description'] ?? '')) ?: '',
+                'hotel_info'  => trim((string) ($item['hotel_info'] ?? '')) ?: null,
+                'meals_info'  => trim((string) ($item['meals_info'] ?? '')) ?: null,
+            ]);
+        }
+    }
+
     private function deleteStoredFile(?string $fileUrl): void
     {
         $parsed = parse_url((string) $fileUrl, PHP_URL_PATH);
@@ -133,6 +162,8 @@ class IndonesiaDestinationController extends Controller
             ]);
         }
 
+        $this->syncItineraries($tour, $request->input('itineraries'));
+
         return response()->json([
             'success' => true,
             'message' => 'Destination created successfully',
@@ -177,6 +208,7 @@ class IndonesiaDestinationController extends Controller
             'base_price' => 'required|numeric',
             'interest_tags' => 'nullable|array',
             'interest_tags.*' => 'string|max:50',
+            'itineraries' => 'nullable',
             'itinerary_pdf' => 'nullable|file|mimes:pdf|max:51200',
             'primary_image' => 'nullable|image|max:5120',
             'images' => 'nullable|array|max:5',
@@ -290,6 +322,7 @@ class IndonesiaDestinationController extends Controller
         }
 
         $this->syncPrimaryGallery($tour, $requestedPrimaryId);
+        $this->syncItineraries($tour, $request->input('itineraries'));
 
         return response()->json([
             'success' => true,

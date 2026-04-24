@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\GalleryItemController;
 use App\Http\Controllers\Api\TransportationBookingController;
 use App\Http\Controllers\Api\TransportationController;
 use App\Http\Controllers\Api\TravelInfoItemController;
+use App\Http\Controllers\Api\NasionalHeroImageController;
+use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\HeroImageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,8 @@ Route::post('/admin/login', [AuthController::class, 'login']);
 
 // ─── Public API ──────────────────────────────────────────────
 Route::get('/hero-images', [HeroImageController::class, 'publicIndex']);
+Route::get('/nasional-hero-images', [NasionalHeroImageController::class, 'publicIndex']);
+Route::get('/team-members', [TeamMemberController::class, 'index']);
 Route::get('/about-story-section', [AboutStorySectionController::class, 'show']);
 Route::get('/gallery-items', [GalleryItemController::class, 'index']);
 Route::get('/gallery-items/{gallery_item}', [GalleryItemController::class, 'show']);
@@ -65,6 +69,10 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     // Entities that are publicly readable (except index/show):
     Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
     Route::apiResource('hero-images', HeroImageController::class)->except(['index', 'show']);
+    Route::get('/admin/nasional-hero-images', [NasionalHeroImageController::class, 'index']);
+    Route::apiResource('nasional-hero-images', NasionalHeroImageController::class)->except(['index', 'show']);
+    Route::get('/admin/team-members', [TeamMemberController::class, 'adminIndex']);
+    Route::apiResource('team-members', TeamMemberController::class)->except(['index', 'show']);
     Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);
     Route::apiResource('gallery-items', GalleryItemController::class)->except(['index', 'show']);
     Route::apiResource('transportations', TransportationController::class)->except(['index', 'show']);

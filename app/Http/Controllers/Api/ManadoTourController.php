@@ -43,7 +43,7 @@ class ManadoTourController extends Controller
                 return [
                     'day_number' => $dayNumber,
                     'title' => $title !== '' ? $title : "Day {$dayNumber}",
-                    'description' => $description !== '' ? $description : null,
+                    'description' => $description !== '' ? $description : '',
                     'hotel_info' => $hotelInfo !== '' ? $hotelInfo : null,
                     'meals_info' => $mealsInfo !== '' ? $mealsInfo : null,
                 ];
