@@ -270,6 +270,11 @@ class InternationalTourController extends Controller
             $tour->itinerary_pdf_path = url(Storage::url($path));
 
             $this->deleteStoredFile($previous);
+        } elseif ($request->input('remove_itinerary_pdf') === '1') {
+            if ($tour->itinerary_pdf_path) {
+                $this->deleteStoredFile($tour->itinerary_pdf_path);
+            }
+            $tour->itinerary_pdf_path = null;
         }
 
         $tour->update([
@@ -292,7 +297,7 @@ class InternationalTourController extends Controller
             'passport_validity' => $request->passport_validity,
         ]);
 
-        if ($request->hasFile('itinerary_pdf')) {
+        if ($request->hasFile('itinerary_pdf') || $request->input('remove_itinerary_pdf') === '1') {
             $tour->save();
         }
 

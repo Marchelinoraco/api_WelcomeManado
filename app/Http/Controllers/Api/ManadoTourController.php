@@ -385,6 +385,11 @@ class ManadoTourController extends Controller
             if ($previous) {
                 $this->deleteStoredFile($previous);
             }
+        } elseif ($request->input('remove_itinerary_pdf') === '1') {
+            if ($tour->itinerary_pdf_path) {
+                $this->deleteStoredFile($tour->itinerary_pdf_path);
+            }
+            $tour->itinerary_pdf_path = null;
         }
 
         $tour->update([
@@ -408,7 +413,7 @@ class ManadoTourController extends Controller
             'terms_conditions' => $request->terms_conditions,
         ]);
 
-        if ($request->hasFile('itinerary_pdf')) {
+        if ($request->hasFile('itinerary_pdf') || $request->input('remove_itinerary_pdf') === '1') {
             $tour->save();
         }
 
