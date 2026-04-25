@@ -77,7 +77,13 @@ class IndonesiaDestinationController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->integer('per_page', 15);
-        $tours = IndonesiaDestination::with(['category', 'galleries'])->latest()->paginate($perPage);
+        $query = IndonesiaDestination::with(['category', 'galleries'])->latest();
+
+        if ($request->boolean('featured')) {
+            $query->where('is_featured', true);
+        }
+
+        $tours = $query->paginate($perPage);
 
         $tours->getCollection()->each(function ($t) {
             $cover = $t->galleries?->firstWhere('is_primary', true) ?? $t->galleries?->first();
@@ -334,6 +340,17 @@ class IndonesiaDestinationController extends Controller
             'message' => 'Destination updated successfully',
             'data' => $tour,
         ]);
+    }
+
+    public function toggleFeatured($id)
+    {
+        $tour = IndonesiaDestination::find($id);
+        if (! $tour) {
+            return response()->json(['success' => false, 'message' => 'Destination not found'], 404);
+        }
+        $tour->is_featured = ! $tour->is_featured;
+        $tour->save();
+        return response()->json(['success' => true, 'is_featured' => $tour->is_featured]);
     }
 
     public function destroy($id)

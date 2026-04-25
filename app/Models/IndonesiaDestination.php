@@ -15,6 +15,7 @@ class IndonesiaDestination extends Model
         'base_price',
         'duration_days', 'duration_nights', 'airline_info', 'highlights',
         'inclusions', 'exclusions', 'terms_conditions', 'interest_tags', 'itinerary_pdf_path',
+        'is_featured',
     ];
 
     protected $casts = [

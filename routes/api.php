@@ -90,8 +90,11 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
 
     // Admin-only entirely (Tours manage themselves via TourController for public):
     Route::apiResource('manado-tours', ManadoTourController::class);
+    Route::post('manado-tours/{id}/toggle-featured', [ManadoTourController::class, 'toggleFeatured']);
     Route::apiResource('indonesia-destinations', IndonesiaDestinationController::class);
+    Route::post('indonesia-destinations/{id}/toggle-featured', [IndonesiaDestinationController::class, 'toggleFeatured']);
     Route::apiResource('international-tours', InternationalTourController::class);
+    Route::post('international-tours/{id}/toggle-featured', [InternationalTourController::class, 'toggleFeatured']);
 
     // Bookings are publicly creatable, but admin-only readable/updatable/deletable:
     Route::apiResource('transportation-bookings', TransportationBookingController::class)->except(['store']);

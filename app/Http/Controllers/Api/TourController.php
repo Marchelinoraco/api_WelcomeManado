@@ -14,6 +14,7 @@ class TourController extends Controller
     {
         $type = $request->get('type');
         $categorySlug = $request->get('category');
+        $featuredOnly = $request->boolean('featured');
 
         $results = [];
 
@@ -22,6 +23,9 @@ class TourController extends Controller
             $query = ManadoTour::with(['category', 'galleries' => fn ($q) => $q->where('is_primary', true)]);
             if ($categorySlug) {
                 $query->whereHas('category', fn ($q) => $q->where('slug', $categorySlug));
+            }
+            if ($featuredOnly) {
+                $query->where('is_featured', true);
             }
             $results['local'] = $query->latest()->get();
         }
@@ -32,6 +36,9 @@ class TourController extends Controller
             if ($categorySlug) {
                 $query->whereHas('category', fn ($q) => $q->where('slug', $categorySlug));
             }
+            if ($featuredOnly) {
+                $query->where('is_featured', true);
+            }
             $results['national'] = $query->latest()->get();
         }
 
@@ -40,6 +47,9 @@ class TourController extends Controller
             $query = InternationalTour::with(['category', 'galleries' => fn ($q) => $q->where('is_primary', true)]);
             if ($categorySlug) {
                 $query->whereHas('category', fn ($q) => $q->where('slug', $categorySlug));
+            }
+            if ($featuredOnly) {
+                $query->where('is_featured', true);
             }
             $results['international'] = $query->latest()->get();
         }

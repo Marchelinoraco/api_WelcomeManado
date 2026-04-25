@@ -17,6 +17,7 @@ class InternationalTour extends Model
         'inclusions', 'exclusions', 'terms_conditions',
         'visa_requirements', 'passport_validity',
         'itinerary_pdf_path',
+        'is_featured',
     ];
 
     protected $casts = [

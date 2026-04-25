@@ -104,7 +104,13 @@ class ManadoTourController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->integer('per_page', 15);
-        $tours = ManadoTour::with(['category', 'galleries'])->latest()->paginate($perPage);
+        $query = ManadoTour::with(['category', 'galleries'])->latest();
+
+        if ($request->boolean('featured')) {
+            $query->where('is_featured', true);
+        }
+
+        $tours = $query->paginate($perPage);
 
         $tours->getCollection()->each(function ($t) {
             $cover = $t->galleries?->firstWhere('is_primary', true) ?? $t->galleries?->first();
@@ -490,6 +496,17 @@ class ManadoTourController extends Controller
             'message' => 'Tour updated successfully',
             'data' => $tour->load(['category', 'itineraries', 'galleries']),
         ]);
+    }
+
+    public function toggleFeatured($id)
+    {
+        $tour = ManadoTour::find($id);
+        if (! $tour) {
+            return response()->json(['success' => false, 'message' => 'Tour not found'], 404);
+        }
+        $tour->is_featured = ! $tour->is_featured;
+        $tour->save();
+        return response()->json(['success' => true, 'is_featured' => $tour->is_featured]);
     }
 
     public function destroy($id)

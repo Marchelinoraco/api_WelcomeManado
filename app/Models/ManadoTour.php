@@ -20,6 +20,7 @@ class ManadoTour extends Model
         'duration_hours_max',
         'highlights',
         'inclusions', 'exclusions', 'terms_conditions', 'itinerary_pdf_path',
+        'is_featured',
     ];
 
     public function category()
