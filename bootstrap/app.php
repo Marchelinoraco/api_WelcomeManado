@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(HandleCors::class);
         $middleware->alias([
             'log.admin' => \App\Http\Middleware\LogAdminActivity::class,
+            'is_super_admin' => \App\Http\Middleware\IsSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

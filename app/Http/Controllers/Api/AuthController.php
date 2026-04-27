@@ -29,6 +29,13 @@ class AuthController extends Controller
             ]);
         }
 
+        // Cek status aktif akun (bypass untuk super admin)
+        if (! $user->is_active && $user->email !== 'admin@welcomemanado.com') {
+            return response()->json([
+                'message' => 'Akun Anda tidak aktif. Hubungi super admin.',
+            ], 403);
+        }
+
         // Hapus token lama dari device yang sama (opsional)
         $user->tokens()->where('name', 'admin-token')->delete();
 

@@ -5,9 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TravelInfoItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TravelInfoItemController extends Controller
 {
+    private function deleteStoredImage(?string $imageUrl): void
+    {
+        if (!$imageUrl) return;
+        $parsed = parse_url($imageUrl, PHP_URL_PATH);
+        $prefix = '/storage/';
+        if (is_string($parsed) && str_starts_with($parsed, $prefix)) {
+            Storage::disk('public')->delete(substr($parsed, strlen($prefix)));
+        }
+    }
+
+    private function isUploadedImage(?string $url): bool
+    {
+        if (!$url) return false;
+        return str_contains($url, '/storage/travel-info/');
+    }
     public function index(Request $request)
     {
         $query = TravelInfoItem::query();
@@ -63,9 +79,16 @@ class TravelInfoItemController extends Controller
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
             'image_url' => 'nullable|string|max:2048',
+            'image' => 'nullable|image|max:5120',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
         ]);
+
+        $imageUrl = $validated['image_url'] ?? null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('travel-info', 'public');
+            $imageUrl = url(Storage::url($path));
+        }
 
         $item = TravelInfoItem::create([
             'type' => $validated['type'],
@@ -78,7 +101,7 @@ class TravelInfoItemController extends Controller
             'description_en' => $validated['description_en'] ?? null,
             'description_ko' => $validated['description_ko'] ?? null,
             'description_zh' => $validated['description_zh'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
+            'image_url' => $imageUrl,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => array_key_exists('is_active', $validated) ? (bool) $validated['is_active'] : true,
         ]);
@@ -114,9 +137,27 @@ class TravelInfoItemController extends Controller
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
             'image_url' => 'nullable|string|max:2048',
+            'image' => 'nullable|image|max:5120',
+            'remove_image' => 'nullable|string',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
         ]);
+
+        $imageUrl = $item->image_url;
+        if ($request->hasFile('image')) {
+            if ($this->isUploadedImage($item->image_url)) {
+                $this->deleteStoredImage($item->image_url);
+            }
+            $path = $request->file('image')->store('travel-info', 'public');
+            $imageUrl = url(Storage::url($path));
+        } elseif ($request->input('remove_image') === '1') {
+            if ($this->isUploadedImage($item->image_url)) {
+                $this->deleteStoredImage($item->image_url);
+            }
+            $imageUrl = null;
+        } elseif (array_key_exists('image_url', $validated)) {
+            $imageUrl = $validated['image_url'] ?? null;
+        }
 
         $update = [
             'type' => $validated['type'],
@@ -129,7 +170,7 @@ class TravelInfoItemController extends Controller
             'description_en' => $validated['description_en'] ?? null,
             'description_ko' => $validated['description_ko'] ?? null,
             'description_zh' => $validated['description_zh'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
+            'image_url' => $imageUrl,
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
         ];
 

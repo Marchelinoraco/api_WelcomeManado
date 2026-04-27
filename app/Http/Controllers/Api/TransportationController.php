@@ -49,25 +49,34 @@ class TransportationController extends Controller
             'type' => 'nullable|string|max:255',
             'price' => 'required|integer|min:0',
             'available' => 'nullable|boolean',
-            'image' => 'nullable|image|max:5120',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|max:5120',
+            'retain_image_urls' => 'nullable|array|max:5',
+            'retain_image_urls.*' => 'nullable|string',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
         ]);
 
-        $imageUrl = null;
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('transportations', 'public');
-            $imageUrl = url(Storage::url($path));
+        $uploadedUrls = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('transportations', 'public');
+                $uploadedUrls[] = url(Storage::url($path));
+            }
         }
+
+        $allImages = array_values(array_filter(array_merge($uploadedUrls)));
+        $primaryImage = $allImages[0] ?? null;
 
         $item = Transportation::create([
             'name' => $request->name,
             'type' => $request->type,
             'price' => (int) $request->price,
             'available' => (bool) ($request->available ?? true),
-            'image_url' => $imageUrl,
+            'image_url' => $primaryImage,
+            'images' => $allImages ?: null,
             'description' => $request->description,
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,
@@ -89,31 +98,51 @@ class TransportationController extends Controller
             'type' => 'nullable|string|max:255',
             'price' => 'required|integer|min:0',
             'available' => 'nullable|boolean',
-            'image' => 'nullable|image|max:5120',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|max:5120',
+            'retain_image_urls' => 'nullable|array|max:5',
+            'retain_image_urls.*' => 'nullable|string',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
             'description_zh' => 'nullable|string',
         ]);
 
-        $imageUrl = $item->image_url;
-        if ($request->hasFile('image')) {
-            // Delete old image
-            if ($item->image_url) {
-                $parsed = parse_url($item->image_url, PHP_URL_PATH);
+        // Collect retained URLs
+        $retainUrls = collect($request->input('retain_image_urls', []))
+            ->filter()
+            ->values()
+            ->toArray();
+
+        // Delete old images that are no longer retained
+        $existingImages = $item->images ?? ($item->image_url ? [$item->image_url] : []);
+        foreach ($existingImages as $oldUrl) {
+            if (!in_array($oldUrl, $retainUrls)) {
+                $parsed = parse_url($oldUrl, PHP_URL_PATH);
                 $storagePath = ltrim(str_replace('/storage/', '', $parsed), '/');
                 Storage::disk('public')->delete($storagePath);
             }
-            $path = $request->file('image')->store('transportations', 'public');
-            $imageUrl = url(Storage::url($path));
         }
+
+        // Upload new images
+        $newUrls = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('transportations', 'public');
+                $newUrls[] = url(Storage::url($path));
+            }
+        }
+
+        $allImages = array_values(array_filter(array_merge($retainUrls, $newUrls)));
+        $primaryImage = $allImages[0] ?? null;
 
         $item->update([
             'name' => $request->name,
             'type' => $request->type,
             'price' => (int) $request->price,
             'available' => (bool) ($request->available ?? $item->available),
-            'image_url' => $imageUrl,
+            'image_url' => $primaryImage,
+            'images' => $allImages ?: null,
             'description' => $request->description,
             'description_en' => $request->description_en,
             'description_ko' => $request->description_ko,

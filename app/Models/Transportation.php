@@ -15,6 +15,7 @@ class Transportation extends Model
         'price',
         'available',
         'image_url',
+        'images',
         'description',
         'description_en',
         'description_ko',
@@ -24,6 +25,7 @@ class Transportation extends Model
     protected $casts = [
         'price' => 'integer',
         'available' => 'boolean',
+        'images' => 'array',
     ];
 
     public function bookings()

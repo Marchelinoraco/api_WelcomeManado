@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\TransportationController;
 use App\Http\Controllers\Api\TravelInfoItemController;
 use App\Http\Controllers\Api\NasionalHeroImageController;
 use App\Http\Controllers\Api\TeamMemberController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\HeroImageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -110,4 +111,12 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     Route::get('/admin/blog-hero-image', [BlogHeroImageController::class, 'adminShow']);
     Route::post('/blog-hero-image', [BlogHeroImageController::class, 'upsert']);
     Route::delete('/blog-hero-image', [BlogHeroImageController::class, 'destroy']);
+});
+
+// ─── Super Admin: User Management ──────────────────────────
+Route::middleware(['auth:sanctum', 'is_super_admin'])->group(function () {
+    Route::get('/admin/users', [AdminUserController::class, 'index']);
+    Route::post('/admin/users', [AdminUserController::class, 'store']);
+    Route::put('/admin/users/{id}', [AdminUserController::class, 'update']);
+    Route::post('/admin/users/{id}/toggle-status', [AdminUserController::class, 'toggleStatus']);
 });
