@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\TransportationController;
 use App\Http\Controllers\Api\TravelInfoItemController;
 use App\Http\Controllers\Api\NasionalHeroImageController;
 use App\Http\Controllers\Api\TeamMemberController;
+use App\Http\Controllers\Api\TransportDestinationController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\HeroImageController;
 use Illuminate\Http\Request;
@@ -62,6 +63,8 @@ Route::get('/blog/posts', [BlogPostController::class, 'index']);
 Route::get('/blog/posts/{slug}', [BlogPostController::class, 'show']);
 Route::get('/blog/hero-image', [BlogHeroImageController::class, 'show']);
 
+Route::get('/transport-destinations', [TransportDestinationController::class, 'index']);
+
 // ─── Admin API (Protected) ──────────────────────────────────
 Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     // Auth
@@ -99,6 +102,8 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
 
     // Bookings are publicly creatable, but admin-only readable/updatable/deletable:
     Route::apiResource('transportation-bookings', TransportationBookingController::class)->except(['store']);
+
+    Route::apiResource('transport-destinations', TransportDestinationController::class)->except(['index', 'show']);
 
     // Blog Management
     Route::apiResource('blog-categories', BlogCategoryController::class)->except(['index']);
