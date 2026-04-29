@@ -12,6 +12,8 @@ return [
         'https://admin-welcome-manado.vercel.app',
         'https://welcomemanado.my.id',
         'https://admin.welcomemanado.my.id',
+        'https://welcomemanado.com',
+        'https://admin.welcomemanado.com',
     ]))))),
     'allowed_origins_patterns' => array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS_PATTERNS', implode(',', [
         '/^http:\/\/localhost:\d+$/',
@@ -19,6 +21,6 @@ return [
     ]))))),
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
-    'max_age' => 0,
+    'max_age' => 0, 
     'supports_credentials' => true,
 ];
