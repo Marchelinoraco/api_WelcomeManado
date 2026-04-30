@@ -235,6 +235,8 @@ class ManadoTourController extends Controller
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
             'itinerary_pdf_path' => null,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf')) {
@@ -417,6 +419,8 @@ class ManadoTourController extends Controller
             'inclusions' => $request->inclusions,
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf') || $request->input('remove_itinerary_pdf') === '1') {

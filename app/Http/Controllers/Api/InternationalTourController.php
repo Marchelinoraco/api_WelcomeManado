@@ -140,6 +140,8 @@ class InternationalTourController extends Controller
             'terms_conditions' => $request->terms_conditions,
             'visa_requirements' => $request->visa_requirements,
             'passport_validity' => $request->passport_validity,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf')) {
@@ -303,6 +305,8 @@ class InternationalTourController extends Controller
             'terms_conditions' => $request->terms_conditions,
             'visa_requirements' => $request->visa_requirements,
             'passport_validity' => $request->passport_validity,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf') || $request->input('remove_itinerary_pdf') === '1') {

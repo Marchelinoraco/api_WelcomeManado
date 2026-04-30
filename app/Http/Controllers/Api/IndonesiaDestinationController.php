@@ -145,6 +145,8 @@ class IndonesiaDestinationController extends Controller
             'terms_conditions' => $request->terms_conditions,
             'interest_tags' => $request->interest_tags,
             'itinerary_pdf_path' => null,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf')) {
@@ -261,6 +263,8 @@ class IndonesiaDestinationController extends Controller
             'exclusions' => $request->exclusions,
             'terms_conditions' => $request->terms_conditions,
             'interest_tags' => $request->interest_tags,
+            'is_featured' => $request->boolean('is_featured'),
+            'featured_badge' => $request->is_featured ? $request->featured_badge : null,
         ]);
 
         if ($request->hasFile('itinerary_pdf') || $request->input('remove_itinerary_pdf') === '1') {
