@@ -10,7 +10,7 @@ class IndonesiaDestination extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'title', 'slug', 'description',
+        'category_id', 'title', 'location', 'slug', 'description',
         'description_en', 'description_ko', 'description_zh',
         'base_price',
         'duration_days', 'duration_nights', 'airline_info', 'highlights',

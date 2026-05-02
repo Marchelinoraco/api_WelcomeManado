@@ -129,6 +129,7 @@ class ManadoTourController extends Controller
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'title' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
@@ -218,6 +219,7 @@ class ManadoTourController extends Controller
         $tour = ManadoTour::create([
             'category_id' => $request->category_id,
             'title' => $request->title,
+            'location' => $request->location,
             'slug' => $slug,
             'description' => $request->description,
             'description_en' => $request->description_en,
@@ -292,6 +294,7 @@ class ManadoTourController extends Controller
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'title' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_en' => 'nullable|string',
             'description_ko' => 'nullable|string',
@@ -403,6 +406,7 @@ class ManadoTourController extends Controller
         $tour->update([
             'category_id' => $request->category_id,
             'title' => $request->title,
+            'location' => $request->location,
             'slug' => $slug,
             'description' => $request->description,
             'description_en' => $request->description_en,
