@@ -12,7 +12,7 @@ class ManadoTour extends Model
     protected $fillable = [
         'category_id', 'title', 'location', 'slug', 'description',
         'description_en', 'description_ko', 'description_zh',
-        'base_price', 'tour_type',
+        'base_price', 'price_usd', 'tour_type',
         'duration_days',
         'duration_nights',
         'duration_hours',
