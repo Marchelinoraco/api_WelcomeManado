@@ -12,7 +12,7 @@ class InternationalTour extends Model
     protected $fillable = [
         'category_id', 'title', 'slug', 'description',
         'description_en', 'description_ko', 'description_zh',
-        'base_price',
+        'base_price', 'price_usd',
         'duration_days', 'duration_nights', 'departure_periods', 'airline_info', 'highlights',
         'inclusions', 'exclusions', 'terms_conditions',
         'visa_requirements', 'passport_validity',
