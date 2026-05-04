@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\TransportDestinationController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\HeroImageController;
+use App\Http\Controllers\Api\GoogleReviewStatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,9 @@ Route::get('/tours/{slug}', [TourController::class, 'show']);
 Route::get('/wisatalokal/categories', [CategoryController::class, 'byType'])->defaults('type', 'local');
 Route::get('/nasional/categories', [CategoryController::class, 'byType'])->defaults('type', 'national');
 Route::get('/internasional/regions', [CategoryController::class, 'byType'])->defaults('type', 'international');
+
+// Google Review Stats
+Route::get('/google-review-stats', [GoogleReviewStatController::class, 'index']);
 
 Route::get('/wisatalokal/tours', [TourController::class, 'localIndex']);
 Route::get('/wisatalokal/tours/{slug}', [TourController::class, 'localShow']);
@@ -116,6 +120,9 @@ Route::middleware(['auth:sanctum', 'log.admin'])->group(function () {
     Route::get('/admin/blog-hero-image', [BlogHeroImageController::class, 'adminShow']);
     Route::post('/blog-hero-image', [BlogHeroImageController::class, 'upsert']);
     Route::delete('/blog-hero-image', [BlogHeroImageController::class, 'destroy']);
+
+    // Google Review Stats (Admin Update)
+    Route::put('/google-review-stats', [GoogleReviewStatController::class, 'update']);
 });
 
 // ─── Super Admin: User Management ──────────────────────────
